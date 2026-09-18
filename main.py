@@ -62,28 +62,24 @@ if not CHANNEL_SECRET:
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
-# Shared ApiClient across webhook invocations to avoid constant connection churn
 api_client = ApiClient(configuration)
 line_bot_api = MessagingApi(api_client)
 
 
 # =========================================================
-# GEMINI CONFIGURATION
+# GEMINI CONFIGURATION (รองรับ 15 Keys: 1 ถึง 15)
 # =========================================================
 
 GEMINI_KEYS = [
-    os.getenv("GEMINI_API_KEY_1"),
-    os.getenv("GEMINI_API_KEY_2"),
-    os.getenv("GEMINI_API_KEY_3"),
-    os.getenv("GEMINI_API_KEY_4"),
-    os.getenv("GEMINI_API_KEY_5"),
+    os.getenv(f"GEMINI_API_KEY_{i}")
+    for i in range(1, 16)
 ]
 
-# Remove empty keys
+# กรองเอาเฉพาะ Key ที่มีการประกาศค่าไว้จริงใน .env
 GEMINI_KEYS = [key for key in GEMINI_KEYS if key]
 
 if not GEMINI_KEYS:
-    raise RuntimeError("No GEMINI_API_KEY_1...5 found in .env")
+    raise RuntimeError("No GEMINI_API_KEY found in .env")
 
 MODEL = "gemini-2.5-flash-lite"
 
@@ -205,7 +201,7 @@ def send_line_reply_with_retry(reply_token: str, message: TextMessage, max_retri
         reply_token=reply_token,
         messages=[message],
     )
-    
+
     for attempt in range(1, max_retries + 1):
         try:
             line_bot_api.reply_message(request_payload)
